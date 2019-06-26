@@ -22,7 +22,7 @@
 
   ![image](https://code.visualstudio.com/assets/docs/editor/debugging/launch-configuration.png)
 
-> *如果你的项目根目录下有.vscode目录且下面有launch.json配置文件，则点击上面的小齿轮按钮会直接打开此launch.json配置文件*
+> *如果你的项目根目录下有.vscode目录且下面有launch.json配置文件，则点击上面的小齿轮按钮会直接打开此launch.json配置文件*
 
 这时会出现如下，让你选择调试环境，VSCode内置了Node.js环境，可以在插件tab安装其他语言的扩展，VSCode支持各种语言的调试，eg：PHP，Python，go，C/C++...我们直接选择Node.js环境
 
@@ -31,9 +31,6 @@
 选择后会直接打开一个launch.json文件并有如下配置：
 ```json
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {
@@ -48,7 +45,7 @@
 
 按`command+shift+E`回到目录列表会看到多了一个.vscode目录，下面就是该launch.json文件，可以点击右下角的Add Configuration按钮，会弹出如下配置供选择，在这个配置文件里可以充分利用它的智能感知功能，我们选择`Node.js: Launch Program`
 
-![image](https://github.com/Cslove/Blog/raw/master/screenshots/launch.jpg)
+![image](https://github.com/Cslove/Blog/raw/master/screenshots/launch.png)
 
 它会自动帮我们生成该配置的常用项，我们将其中的`"program": "${file}"`改为`"program": "${workspaceRoot}/app.js"`，在这个配置有挺多的内置变量可以直接使用，`${file}`就是当前所活跃的文件，`${workspaceRoot}`表示当前项目的工作根目录，完整的替换变量的列表可参考[这里](https://code.visualstudio.com/docs/editor/variables-reference)
 
