@@ -1,4 +1,6 @@
 # Debugging in VSCode
+
+描述了在VS Code中怎样充分利用其强大的debug功能来调试web项目和源码调试
  <!-- ![image](https://github.com/Cslove/Blog/raw/master/screenshots/pic.jpg) -->
  ## 背景
 
@@ -51,3 +53,27 @@
 它会自动帮我们生成该配置的常用项，我们将其中的`"program": "${file}"`改为`"program": "${workspaceRoot}/app.js"`，在这个配置有挺多的内置变量可以直接使用，`${file}`就是当前所活跃的文件，`${workspaceRoot}`表示当前项目的工作根目录，完整的替换变量的列表可参考[这里](https://code.visualstudio.com/docs/editor/variables-reference)
 
 > *在上面的配置字段中有个`request`字段，有两个值可以选择：`"launch"`和 `"attach"`，它表示VS Code中核心的两种调试模式。当时搞清这两种模式区别的时候也是有点晕，这也是取决与你项目中的工作流是怎样的，如果你调试的是web项目，通常你会在浏览器中已经直接打开本地项目了，这个时候我们就要使用attach模式，正如字面的意思，将debugger附加到你已经运行到的web项目，而launch就像字面意思是直接由编辑器启动这个程序，比如启动一个服务端项目或者上面我们的小例子，这个启动模式编辑器会自动把debugger附加到这个程序中，下面我们在源码调试和web项目调试两节会有这两种模式的直观印象*
+
+在开始debug之前，我们先在app.js的第二行最左边打一个断点
+
+ <div align=center><img src="https://github.com/Cslove/Blog/raw/master/screenshots/break_point.png"/></div>
+
+`configurations`里面的name字段会显示在左边Debug一栏最上面的下拉列表里，点击小齿轮左边的框就可以选择刚才添加的配置，对应与`configurations`里面的name字段，选择Launch Program，然后点击左边的小绿色三角启动debug(F5)，然后就可以看到程序暂停在刚才打的断点这行了
+
+<div align=center><img width="70%" src="https://github.com/Cslove/Blog/raw/master/screenshots/debug.png"/></div>
+
+可以看到最上面的工具栏就是所有的调试操作：
+
+![image](https://code.visualstudio.com/assets/docs/editor/debugging/toolbar.png)
+
+- 继续/暂停 <font color="orange">F5</font>
+- 单步跳过 <font color="orange">F10</font>
+- 单步调试 <font color="orange">F11</font>
+- 单步跳出 <font color="orange">⇧F11</font>
+- 重启 <font color="orange">⇧⌘F5</font>
+- 停止 <font color="orange">⇧F5</font>
+
+左边的调试栏也显示出了程序里运行的所有变量，可以看到commonjs的模块变量也显示出来了`__dirname,__filename,module,require...`global下面也有所有的全局变量，调用堆栈也显示了程序中函数的调用顺序，这样你就可以在任何你想调试的地方打个断点，这个地方的所有信息就全部暴露出来了。下面我们可以看看怎样来调试web项目
+
+## 调试web项目
+
