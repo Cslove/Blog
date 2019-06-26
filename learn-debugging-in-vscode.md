@@ -56,7 +56,7 @@
 
 在开始debug之前，我们先在app.js的第二行最左边打一个断点
 
- <div align=center><img src="https://github.com/Cslove/Blog/raw/master/screenshots/break_point.png"/></div>
+ <div align=center><img width="50%" src="https://github.com/Cslove/Blog/raw/master/screenshots/break_point.png"/></div>
 
 `configurations`里面的name字段会显示在左边Debug一栏最上面的下拉列表里，点击小齿轮左边的框就可以选择刚才添加的配置，对应与`configurations`里面的name字段，选择Launch Program，然后点击左边的小绿色三角启动debug(F5)，然后就可以看到程序暂停在刚才打的断点这行了
 
@@ -66,7 +66,7 @@
 
 ![image](https://code.visualstudio.com/assets/docs/editor/debugging/toolbar.png)
 
-- 继续/暂停 <font color="orange">F5</font>
+- 继续/暂停 <font color="orange">F5</font>
 - 单步跳过 <font color="orange">F10</font>
 - 单步调试 <font color="orange">F11</font>
 - 单步跳出 <font color="orange">⇧F11</font>
