@@ -25,7 +25,7 @@
 
 > *如果你的项目根目录下有.vscode目录且下面有launch.json配置文件，则点击上面的小齿轮按钮会直接打开此 launch.json配置文件*
 
-这时会出现如下，让你选择调试环境，VSCode内置了Node.js环境，可以在插件tab安装其他语言的扩展，VSCode支持各种语言的调试，eg：PHP，Python，go，C/C++...我们直接选择Node.js环境
+这时会出现如下，让你选择调试环境，VSCode内置了Node.js环境，可以在插件tab安装其他语言的扩展，VSCode支持各种语言的调试，eg：PHP，Python，go，C/C++...我们直接选择Node.js环境
 
   <div align=center><img width="50%" src="https://code.visualstudio.com/assets/docs/editor/debugging/debug-environments.png"/></div>
 
