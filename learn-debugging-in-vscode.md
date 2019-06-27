@@ -188,3 +188,87 @@ ReactDOM.render(
 打开项目，发现整块源码都是用TypeScript写的（实践你会发现在VS Code中用debugger配合TypeScript看源码有多爽），VS Code可以调试任何可以编译成javascript的语言，更不用说亲儿子TS了。
 
 ![iamge](https://github.com/Cslove/Blog/raw/master/screenshots/rollup.png)
+
+看到项目目录中是有自己的.vscode目录中，打开看下launch.json是有关于debug test的配置的，我们先点右下角添加一个Node.js: Launch配置，先放在这。然后看下package.json文件的scripts字段下的命令，在背景里面也说了在install完成后会执行build脚本，我们可以看看build中有一段`rollup -c`命令，这个命令就是典型的rollup打包命令，也就是说它以上一版本已经打包后的自已为依赖把自己的源码进行了打包，那我们就去看下rollup.config.js文件（-c 是指根据根目录下的rollup.config.js文件进行配置打包）。
+
+打开rollup.config.js文件，主要是这三项配置：
+```js
+/* Rollup core node builds */
+{
+    input: 'src/node-entry.ts',
+    ...,
+    output: [
+        { file: 'dist/rollup.js', format: 'cjs', sourcemap: true, banner },
+        { file: 'dist/rollup.es.js', format: 'esm', banner }
+    ]
+},
+/* Rollup CLI */
+{
+    input: 'bin/src/index.ts',
+    ...,
+    output: {
+        file: 'bin/rollup',
+        format: 'cjs',
+        banner: '#!/usr/bin/env node',
+        paths: {
+            rollup: '../dist/rollup.js'
+        }
+    }
+}
+/* Rollup core browser builds */
+{
+    input: 'src/browser-entry.ts',
+    ...,
+    output: [
+        { file: 'dist/rollup.browser.js', format: 'umd', name: 'rollup', banner },
+        { file: 'dist/rollup.browser.es.js', format: 'esm', banner }
+    ]
+}
+```
+
+这是根据input文件打包到output的输出路径，可以看看package.json里面的files字段就对应与这里的output的输出路径，也就是最终发布到npm包里的所有代码。我们先从Rollup CLI打包过程看起，它的input输入文件是 bin/src/index.ts，这里的入口文件应该就是`rollup -c`对应的执行源文件了，我们先在`const command = minimist(...)`这行打个断点。
+
+![image](https://github.com/Cslove/Blog/raw/master/screenshots/command.png)
+
+既然bin/src/index.ts是最开始的`rollup -c`开始的执行源文件，那我们将此添加至刚刚在launch.json新添加的配置里
+
+```js
+{
+    "type": "node",
+    "request": "launch",
+    "name": "Launch Program",
+    "program": "${workspaceFolder}/bin/src/index.ts",  // 更换这里的路径
+    "args": ["-c"]  // 传给program的参数
+}
+```
+
+注意我们加➕了个args字段，这样就模拟了`rollup -c`命令，这时候若是按F5启动debug，会报个错
+`无法启动程序.../src/index.ts，提示设置"outFiles"属性`。
+
+就是说我们是以ts文件为入口的文件，VS Code需要编译后的js文件对源ts文件的映射，也就是需要sourcemap文件的路径，这样才能对应与源码的位置，可是我们看到只有dist目录下的rollup.js文件有对应的sourcemap文件，这从上面的三项配置就可以看到只有`Rollup core node builds`下的output下的file: 'dist/rollup.js'，设置了`sourcemap: true`，那我们给`Rollup CLI`也设置一下：
+
+```js
+/* Rollup CLI */
+{
+    input: 'bin/src/index.ts',
+    ...,
+    output: {
+        file: 'bin/rollup',
+        format: 'cjs',
+        banner: '#!/usr/bin/env node',
+        paths: {
+            rollup: '../dist/rollup.js'
+        },
+        sourcemap: true    // 设置sourcemap
+    }
+}
+```
+
+这样给launch.json也要设置对应的 outFiles 属性`outFiles: ["${workspaceFolder}/bin/*"]`， 这样就能找到源文件的映射了。
+
+我们改了rollup.config.js文件，那就意味着需要重新 run build 一下，在命令行执行`npm run build`，可以看到bin目录下有了新的rollup.map文件
+
+然后F5启动debug，你会发现程序停在最开始打的command断点那个地方了，这样你就可以寻着debug的脚步 👣 探寻源码之旅了，大功告成！
+
+## 彩蛋 🎉🎉🎉
+
