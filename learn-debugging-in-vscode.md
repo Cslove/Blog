@@ -186,4 +186,5 @@ ReactDOM.render(
 废话不多说，这节我们以rollup源码为例。建议花半分钟可以去[官网](https://rollupjs.org/guide/en)看看这是个什么，不过看不看无所谓也不是这节的重点。建议把此项目clone下来跟着步骤一起走。
 
 打开项目，发现整块源码都是用TypeScript写的（实践你会发现在VS Code中用debugger配合TypeScript看源码有多爽），VS Code可以调试任何可以编译成javascript的语言，更不用说亲儿子TS了。
+
 ![iamge](https://github.com/Cslove/Blog/raw/master/screenshots/rollup.png)
