@@ -129,7 +129,7 @@ ReactDOM.render(
 );
 // ...
 ```
-保存后浏览器自动刷新了，可以看到只是将渲染数据提取出来以props形式从父组件传入，接下来我们进行debug的配置
+保存后浏览器自动刷新了，可以看到只是将渲染数据提取出来以props形式从父组件传入，接下来我们进行debug的配置
 
 调试web项目需要安装一个利器，打开VS Code左边的扩展栏 <font color="orange">⇧⌘X</font> ，然后输入chrome，选择并点安装 `Debugger for Chrome` 扩展，安装完后进入左边debug栏点击小齿轮 <font color="orange">F5</font> 在弹出的选择环境的下拉列表框中选择 chrome ，然后会自动打开Launch.json配置文件并有如下配置：
 
