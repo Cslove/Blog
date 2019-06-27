@@ -155,4 +155,25 @@ ReactDOM.render(
 
  相应的props和相关变量都可以在debug栏清晰的看到，都不用去看浏览器的调试了。
 
- 注意到上面的chrome调试配置的 request 类型是 launch，我们还可以尝试另一种调试方式，也就是`"request": "attach"`的调试方式，
+ 注意到上面的chrome调试配置的 request 类型是 launch，我们还可以尝试另一种调试方式，也就是`"request": "attach"`的调试方式，打开Launch.json配置文件，点击右下角的Add Cogfiguration选择`Chrome: attach`， VS Code自动生成了系列配置如下：
+
+ ```json
+{
+    "type": "chrome",
+    "request": "attach",
+    "name": "Attach to Chrome",
+    "port": 9222,
+    "webRoot": "${workspaceFolder}"
+}
+ ```
+要进行远程调试必须的打开chrome的远程调试功能，并设置以上默认配置的远程调试端口，如下：
+
+- **Mac**：<br />在终端运行`/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --remote-debugging-port=9222`， 会直接运行一个新的浏览器的窗口，然后将之前的debug-react项目重启一下`npm start`
+
+- **Windows**：<br />右击桌面的chrome的快捷方式，点属性=>目标框的后面添加`--remote-debugging-port=9222`，或者在命令行下执行`<path to chrome>/chrome.exe --remote-debugging-port=9222`，重启一下debug-react项目
+
+启动调试 <font color="orange">F5</font> ，可能会让你选一个本地服务，选择debug-react即可，可以看到已经开始了debug调试：
+
+![image](https://github.com/Cslove/Blog/raw/master/screenshots/attach-debug.png)
+
+刷新一下，程序停在了断点的位置上了。注意attach并没有启动一个新的浏览器窗口，而是在你原有启动的窗口下开始了调试。将鼠标移到上图橙色正方图标上，显示的是断开连接，这也和之前我们所说的attach模式是把debugger连接到了已经启动的app上一致，它没有像launch模式那样每次启动都会启一个新的浏览器窗口。
