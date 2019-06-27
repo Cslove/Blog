@@ -1,6 +1,6 @@
 # Debugging in VSCode
 
-描述了在VS Code中怎样充分利用其强大的debug功能来调试web项目和源码调试
+描述了在VS Code中怎样充分利用其强大的debug功能来调试web项目和源码调试（TypeScript）
  <!-- ![image](https://github.com/Cslove/Blog/raw/master/screenshots/pic.jpg) -->
  ## 背景
 
@@ -77,3 +77,82 @@
 
 ## 调试web项目
 
+我们用create-react-app官方脚手架创建一个简单app项目，在终端运行如下命令：
+
+```bash
+npx create-react-app debug-react  # npm 版本5.2以上
+cd debug-react
+npm start
+```
+可以看到浏览器自动打开并运行了这个简单web项目，为了方便调试看到效果，我们将App.js代码稍加改动如下：
+
+```js
+//  App.js
+// ...
+function App(props) {
+  const {
+    link,
+    text,
+  } = props  // 这行打个断点
+  return (
+    <div className="App">
+      <header className="App-header">
+        <img src={logo} className="App-logo" alt="logo" />
+        <p>
+          Edit <code>src/App.js</code> and save to reload.
+        </p>
+        <a
+          className="App-link"
+          href={link}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {text}
+        </a>
+      </header>
+    </div>
+  );
+}
+// ...
+```
+相应的index.js改动如下： 
+
+```js
+// index.js
+// ...
+ReactDOM.render(
+    <App
+        link="https://reactjs.org"
+        text="hello world"
+    />,
+    document.getElementById('root')
+);
+// ...
+```
+保存后浏览器自动刷新了，可以看到只是将渲染数据提取出来以props形式从父组件传入，接下来我们进行debug的配置
+
+调试web项目需要安装一个利器，打开VS Code左边的扩展栏 <font color="orange">⇧⌘X</font> ，然后输入chrome，选择并点安装 `Debugger for Chrome` 扩展，安装完后进入左边debug栏点击小齿轮 <font color="orange">F5</font> 在弹出的选择环境的下拉列表框中选择 chrome ，然后会自动打开Launch.json配置文件并有如下配置：
+
+```json
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "chrome",
+            "request": "launch",
+            "name": "Launch Chrome against localhost",
+            "url": "http://localhost:3000",
+            "webRoot": "${workspaceFolder}"
+        }
+    ]
+}
+```
+你必须指定一个 url 或者 file 配置项启动浏览器，以上配置的url就是指向我们最上面的debug-react项目的本地服务url。如果指定了url，就要设置webRoot字段，其表示一个绝对路径指示本地服务的文件来自哪里，比如以上的webRoot配置会解析`http://localhost:3000/index.js`成为类似` /Users/me/debug-react/app.js`所以确保它设置正确
+
+在启动调试之前确保之前的本地服务是跑着的，然后按 <font color="orange">F5</font> 启动debug调试，可以看到VS Code启动了个新的浏览器窗口，如果程序并没有停在之前的断点处，可以在刷新一下调试 <font color="orange">⇧⌘F5</font> ，可以看到如下效果了：
+
+ <div align=center><img width="70%" src="https://github.com/Cslove/Blog/raw/master/screenshots/debug-web.png"/></div>
+
+ 相应的props和相关变量都可以在debug栏清晰的看到，都不用去看浏览器的调试了。
+
+ 注意到上面的chrome调试配置的 request 类型是 launch，我们还可以尝试另一种调试方式，也就是`"request": "attach"`的调试方式，
