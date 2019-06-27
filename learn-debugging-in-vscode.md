@@ -1,7 +1,6 @@
 # Debugging in VSCode
 
 描述了在VS Code中怎样充分利用其强大的debug功能来调试web项目和源码调试（TypeScript）
- <!-- ![image](https://github.com/Cslove/Blog/raw/master/screenshots/pic.jpg) -->
  ## 背景
 
 之前在看一些github源码的时候看调试数据是非常非常吃力，不知道多少时间消耗在了console，rebuild，switch tab的这几个频率最高的步骤中，着实烦躁。首先回顾一下我自己之前在看一些库源码的过程，以rollup这个打包库为例，首先`git clone`下来，`npm install`后发现它也自动执行了打包过程，看了下`package.json`文件中的scripts字段，其中有prepare脚本命令，npm在执行`npm install`后就会自动执行这个script，这个命令又指向了`npm run build`，进而进行了自动打包过程。通常我都会在这个project下执行`npm link`然后重新重建个文件夹写自己的一些例子项目link到前面的project，这样看project下的源码或者console之后重新build，就能在例子项目实时能够调试到，其中执行`npm run watch`可以不用重新build。
@@ -155,7 +154,7 @@ ReactDOM.render(
 
  相应的props和相关变量都可以在debug栏清晰的看到，都不用去看浏览器的调试了。
 
- 注意到上面的chrome调试配置的 request 类型是 launch，我们还可以尝试另一种调试方式，也就是`"request": "attach"`的调试方式，打开Launch.json配置文件，点击右下角的Add Cogfiguration选择`Chrome: attach`， VS Code自动生成了系列配置如下：
+ 注意到上面的chrome调试配置的 request 类型是 launch，我们还可以尝试另一种调试方式，也就是`"request": "attach"`的调试方式，打开Launch.json配置文件，点击右下角的Add Cogfiguration选择`Chrome: attach`， VS Code自动生成了系列配置如下：
 
  ```json
 {
@@ -176,4 +175,15 @@ ReactDOM.render(
 
 ![image](https://github.com/Cslove/Blog/raw/master/screenshots/attach-debug.png)
 
-刷新一下，程序停在了断点的位置上了。注意attach并没有启动一个新的浏览器窗口，而是在你原有启动的窗口下开始了调试。将鼠标移到上图橙色正方图标上，显示的是断开连接，这也和之前我们所说的attach模式是把debugger连接到了已经启动的app上一致，它没有像launch模式那样每次启动都会启一个新的浏览器窗口。
+点击以上绿色按钮重启一下，程序停在了断点的位置上了。注意attach并没有启动一个新的浏览器窗口，而是在你原有启动的窗口下开始了调试。将鼠标移到上图橙色正方图标上，显示的是断开连接，这也和之前我们所说的attach模式是把debugger连接到了已经启动的app上的说法一致，它没有像launch模式那样每次启动都会启一个新的浏览器窗口。
+
+在调试react项目的时候会经常遇到render阶段数据还没出来，这跟react的生命周期有关，往往我们会多点几下单步调试或者单步跳过，其实打断点的时候支持多种断点，比如打条件断点，日志断点，函数断点等等...可以自行研究下～至此，调试web项目就到这了，下面我们来看一下怎样用此debugger科学的看那些库源码
+
+## 源码调试
+
+正如背景里面所提到的，在未接触VS Code的debugger之前，我看源码的过程真的很苦逼...而且时常搞不清源码中各个函数的调用栈顺序，效率着实慢的着急，由此往往没耐心往下看，也体会不到源码里的思想精髓...
+
+废话不多说，这节我们以rollup源码为例。建议花半分钟可以去[官网](https://rollupjs.org/guide/en)看看这是个什么，不过看不看无所谓也不是这节的重点。建议把此项目clone下来跟着步骤一起走。
+
+打开项目，发现整块源码都是用TypeScript写的（实践你会发现在VS Code中用debugger配合TypeScript看源码有多爽），VS Code可以调试任何可以编译成javascript的语言，更不用说亲儿子TS了。
+![iamge](https://github.com/Cslove/Blog/raw/master/screenshots/rollup.png)
