@@ -270,5 +270,56 @@ ReactDOM.render(
 
 然后F5启动debug，你会发现程序停在最开始打的command断点那个地方了，这样你就可以寻着debug的脚步 👣 探寻源码之旅了，大功告成！
 
-## 彩蛋 🎉🎉🎉
+## 彩蛋 🥚🥚
+***
+上面的源码调试虽然成功了，可是它调试的是原有的`npm run build`命令，也就是仓库自己的一些rollup配置，我想调试自己写的一些rollup配置该咋办勒。。。？
+
+其实前面的背景已经提到了这个问题，在clone的rollup目录下执行`npm link`，然后你在你自己写的rollup配置目录里执行`npm link rollup`，这样你在node_modules（先安装好rollup依赖的其他依赖，可以先`npm install rollup`，然后删除node_modules里的rollup仓库，link你clone的rollup）里就可以看到整个rollup的链接仓库，在链接仓库里打断点，然后在按上面的步骤在你的例子项目里配置launch.json，这样启动你的debug，你会发现打的断点没用...😓，程序没有暂停过，这也是因为node_modules里的是symlinks，要使断点起作用的话，得给launch.json加上运行参数：
+
+```js
+{
+    "runtimeArgs": [
+        "--preserve-symlinks",
+        // "--preserve-symlinks-main"
+    ]
+}
+```
+
+如果你的program指向的也是个链接文件就也要加上`"--preserve-symlinks-main"`参数，这样就能正常调试你自己写的配置了。（需要Node.js 10+）
+
+***
+在你调试的过程中进行单步调试的时候时常会进入一些node_modules里不想看的库，或者会进入到node的内置模块里，这些其实有时候没必要看，我们就可以跳过这些文件，例如：
+
+```js
+{
+    "skipFiles": [
+        "${workspaceFolder}/node_modules/**/*.js",
+        "${workspaceFolder}/lib/**/*.js",
+        "<node_internals>/**/*.js"   // node内部核心模块 设置的话在正常调试的时候可能有些问题。。。
+    ]
+}
+```
+***
+在前面调试源码一节中我们修改了rollup源码的配置文件并重新手动 run build 了一下，其实我们可以直接在launch.json配置文件中配置一个`"preLaunchTask": "rollup"`，它表示在启动debug调试之前运行一个任务，可以在.vscode文件夹下新建一个task.json，针对源码调试那节我们可以写如下配置：
+
+```js
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "rollup",
+            "type": "shell",
+            "command": "npm run build"
+        }
+    ]
+}
+```
+然后在launch.json中配置`"preLaunchTask": "rollup"`，这样，我们就不用在debug之前手动去执行build，直接F5启动debug就行。相应的还有`postDebugTask`钩子在debug结束后执行一些任务，关于任务的具体设置信息可以看[这里](https://code.visualstudio.com/docs/editor/tasks)
+***
+
+## 总结
+
+没有总结～
 
