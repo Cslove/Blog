@@ -1,4 +1,4 @@
-# Debugging in VSCode
+# Debugg with VSCode
 
 描述了在VS Code中怎样充分利用其强大的debug功能来调试web项目和源码调试（TypeScript）
  ## 背景
