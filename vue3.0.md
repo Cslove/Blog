@@ -93,3 +93,17 @@ var app = Vue.createApp().mount({
 - Vue会自动追踪数据的更新，不像useEffect那样更新需要传入要依赖的数据数组
 
 显然，无论怎样不同，Vue还是受到了react hook灵感而来
+
+在回到上面的代码，与之前的形式不同，现在我们需要调用`createApp()`方法创建一个app实例，然后调用实例的`mount(rootComponent, rootContainer, rootProps)`方法，其接受三个参数，第一个是与之前的`new Vue(options)`中的options一样的根组件实例对象，第二个参数是应用要挂载的dom节点，第三个参数是组件的默认props
+
+`setup()`是组件的一个新属性，它主要用于执行所有的Composition API的入口，是的，所有逻辑都可以写到这个函数里，Vue也相应的暴露出了所有的生命周期钩子，`onMounted()、onUpdated()、onXXX()...`这可能会导致setup函数会很膨胀，但其实这些逻辑就可以专门提取出来以供其他地方复用，这也就是Composition逻辑复用的目的
+
+setup函数内部使用`reactive()`方法初始化了一个state对象，经过`reactive()`方法会返回一个被Proxy代理过的对象（后面会讨论内部的实现原理），`computed()`方法类似与原方式的使用，但又有些微不同，computed方法实际返回的是个refs对象，类似与react的useRef()，`{ value: xx }`，需要拿到里面的value值才能拿到最终的值：
+```js
+const double = computed(() => state.count)
+
+watch(() => {
+    console.log(double.value) // 0
+    console.log(double) // 一个ref对象
+})
+```
