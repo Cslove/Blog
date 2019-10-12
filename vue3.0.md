@@ -91,3 +91,5 @@ var app = Vue.createApp().mount({
 - `setup()`函数只会调用一次，它在`beforeCreate`之后，`created`hook之前调用
 - react hooks会很在意调用顺序并且不能在条件语句中调用，而在`setup`中的Composition API不在乎
 - Vue会自动追踪数据的更新，不像useEffect那样更新需要传入要依赖的数据数组
+
+显然，无论怎样不同，Vue还是受到了react hook灵感而来
