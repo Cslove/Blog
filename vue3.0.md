@@ -44,4 +44,50 @@ bundles packages/vue/src/index.ts → packages/vue/dist/vue.global.js...
 </body>
 </html>
 ```
-可以看到我们通过`<script>`标签直接引入打包出来的文件，然后在另一个script标签内直接打印Vue全局变量，将此文件从浏览器打开在控制台可看到打印信息
+通过`<script>`标签直接引入打包出来的文件，然后在另一个script标签内直接打印Vue全局变量，将此文件从浏览器打开在控制台就可以看到打印信息
+
+通过上面控制台打印的`Vue`信息，可以看到`Vue`已经不在是个`constructor`，也就是说你不能在这样使用`new Vue(options)`，它就像react一样暴露了众多api，具体可以看这个 [rfc](https://github.com/vuejs/rfcs/blob/master/active-rfcs/0004-global-api-treeshaking.md) 
+
+> *以下内容只针对Vue3.0的新功能探索，其中的一些新api最好看下此 [Composition API RFC](https://vue-composition-api-rfc.netlify.com/#summary)*
+
+在上面的index.html文件下的第二个`<script>`块简单写如下代码：
+```js
+const {
+    reactive,
+    computed,
+    watch,
+} = Vue
+var app = Vue.createApp().mount({
+    setup() {
+        const state = reactive({
+            count: 0,
+            double: computed(() => state.count * 2)
+        })
+        function increment() {
+            state.count++
+        }
+        watch(() => {
+            console.log(state.double)
+        })
+        return {
+            state,
+            increment,
+        }
+    },
+    template: `<div>{{ state.count }}|{{ state.double }}</div>
+    <button @click="increment">+ 1</button>`,
+}, '#app')
+```
+保存文件后，刷新浏览器可看到就是一个小按钮点击后会有+1的小功能效果。在看上面的代码是与之前的写法完全不同的形式，这就是官方称为Composition的api，我觉得它主要代表了这几个目的：
+
+- 逻辑复用
+- 代码重组织
+- 更好的类型接口
+
+之前的Vue写法会要在各个生命周期不停的跳转查看逻辑，随着业务需求的增多，逻辑代码也越来越分散，这也导致了越来越难以复用和维护的问题。而且之前的版本在越来越大项目上typescript的支持度也不是很高，由于Vue本质在this的设计问题上，this是指向组件实例上的，而且methods下的函数中的this也是指向组件实例，就导致类型设计的复杂度很高，Vue 3.0就是解决这些问题的。
+
+熟悉react的人看到上面的代码可能会说，这不就是react hooks嘛，是的，确实借鉴了react hook 相同的逻辑复用目的。但与hook又有重大的不同：
+
+- `setup()`函数只会调用一次，它在`beforeCreate`之后，`created`hook之前调用
+- react hooks会很在意调用顺序并且不能在条件语句中调用，而在`setup`中的Composition API不在乎
+- Vue会自动追踪数据的更新，不像useEffect那样更新需要传入要依赖的数据数组
