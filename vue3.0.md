@@ -98,7 +98,7 @@ var app = Vue.createApp().mount({
 
 `setup()`是组件的一个新属性，它主要用于执行所有的Composition API的入口，是的，所有逻辑都可以写到这个函数里，Vue也相应的暴露出了所有的生命周期钩子，`onMounted()、onUpdated()、onXXX()...`这可能会导致setup函数会很膨胀，但其实这些逻辑就可以专门提取出来以供其他地方复用，这也就是Composition逻辑复用的目的
 
-setup函数内部使用`reactive()`方法初始化了一个state对象，经过`reactive()`方法会返回一个被Proxy代理过的对象（后面会讨论内部的实现原理），`computed()`方法类似与原方式的使用，但又有些微不同，computed方法实际返回的是个refs对象，类似与react的useRef()，`{ value: xx }`，需要拿到里面的value值才能拿到最终的值：
+setup函数内部使用`reactive()`方法初始化了一个state对象，经过`reactive()`方法会返回一个被Proxy代理过的对象（后面会讨论内部的实现原理），`computed()`方法类似与原options方式的使用，但又有些微不同，computed方法实际返回的是个refs对象，类似与react的useRef()，`{ value: xx }`，需要拿到里面的value值才能拿到最终的值：
 ```js
 const double = computed(() => state.count)
 
@@ -107,3 +107,40 @@ watch(() => {
     console.log(double) // 一个ref对象
 })
 ```
+值得注意的是在`reactive()`方法内部和在模版里拿到computed之后的值的话，内部会自动拿到value值供使用，例如：
+```js
+const state = reactive({
+    count: 0,
+    double: computed(() => state.count * 2)
+})
+
+watch(() => {
+    console.log(state.double) // 0，无需在这样获取： state.double.value
+})
+```
+为什么要这样设计？主要原因还是js中原始类型和引用类型的概念，在`computed()`内部源码中能看到类似如下形式的代码：
+```js
+function computed(getter) {
+  let value
+  watch(() => {
+    value = getter()
+  })
+  return value
+}
+```
+这样的形式要是基本类型的值会不起作用的，因为值传递的是一个副本，要是改为如下：
+```js
+function computed(getter) {
+  const ref = {
+    value: null
+  }
+  watch(() => {
+    ref.value = getter()
+  })
+  return ref
+}
+```
+这样总是将`getter()`值付给一个ref对象的value值，我们拿到始终是一个引用类型的值，要复出的代价就是我们始终都要在外面手工获取它的value值，要是逻辑复杂的情况下，这样确实也会多一层心智负担。正因如此，Vue3专门引进了refs概念，可将它与react的`useRef()`hook概念做比较，还专门为我们提供了`ref()、isRef()、toRefs()`api，详情查看[API](https://vue-composition-api-rfc.netlify.com/api.html)
+
+回到`setup()`函数，它可以返回一个渲染函数，或是一个对象，如果是个对象的话，对象内的每个属性会作为作践模版的渲染上下文使用，也就是与之前的`data()`函数返回的对象一样可在组件模版中使用，而且`setup()`函数返回的对象直接与this进行了绑定，可以直接在原来的组件options用this使用，方便与vue2.x进行组合使用。
+
