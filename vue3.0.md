@@ -144,3 +144,97 @@ function computed(getter) {
 
 回到`setup()`函数，它可以返回一个渲染函数，或是一个对象，如果是个对象的话，对象内的每个属性会作为作践模版的渲染上下文使用，也就是与之前的`data()`函数返回的对象一样可在组件模版中使用，而且`setup()`函数返回的对象直接与this进行了绑定，可以直接在原来的组件options用this使用，方便与vue2.x进行组合使用。
 
+深入看源码能够一步一步跟着调用栈去看是很有必要的，这些大型框架往往调用栈都很深，没有良好的debug工具很难在读下去，如果没看过我的这篇[文章](https://github.com/Cslove/Blog/blob/master/learn-debugging-in-vscode.md)，就跟着下面的步骤来搭起debug环境（vscode）
+
+打开VS Code左边的扩展栏 ⇧⌘X ，然后输入chrome，选择并点安装 Debugger for Chrome 扩展，安装完后进入左边debug栏点击小齿轮 F5 在弹出的选择环境的下拉列表框中选择 chrome ，然后会自动打开Launch.json配置文件并配置如下：
+```json
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "chrome",
+            "request": "launch",
+            "name": "Launch Chrome",
+            "url": "file:///Users/mac/${你的项目根目录}/vue-next/index.html",
+            "webRoot": "${workspaceFolder}"
+        },
+    ]
+}
+```
+接着在`var app = Vue.createApp().mount({`这行的行号前面打个红色的断点，按F5开始调试，你会看到程序停在了你打的断点这行，f11进入函数体，你会发现我们进入了packages/vue/dist/下的vue.global.js文件中，这是个最后打包过后的总的代码文件，这个文件也可以深入了解源码，但不能让我们追踪核心包模块的设计流程，况且源码用ts写成，我们也不能方便的看各种接口数据类型，解决方法就是让打包工具生成对应的sourcemap文件
+
+我们在根目录下首先将tsconfig文件中的sourcemap选项置为true，然后在rollup.config.js文件中在`createConfig()`函数体的return语句前写一句代码：`output.sourcemap = true`，从字面意思即可看出是希望打包工具能够生成对应的sourcemap文件，保存后重新执行`yarn dev`命令即可看到dist目录下生成了对应的`vue.global.js.map`文件，现在重新开始调试进入createApp函数里即可看到对应的是Vue下的原ts文件，这样就能跟着调用栈一步一步去了解源码
+
+我们可以直接看看reactive函数里面做了什么，直接将代码断点打到`const state = reactive({`这行，开始调试然后深入进去瞧瞧（会先进入computed函数体，一直跳过即可）：
+```js
+export function reactive(target: object) {
+  // if trying to observe a readonly proxy, return the readonly version.
+  if (readonlyToRaw.has(target)) {
+    return target
+  }
+  // target is explicitly marked as readonly by user
+  if (readonlyValues.has(target)) {
+    return readonly(target)
+  }
+  return createReactiveObject(
+    target,
+    rawToReactive,
+    reactiveToRaw,
+    mutableHandlers,
+    mutableCollectionHandlers
+  )
+}
+```
+先是判断了传入的对象是否已经proxy过了没，如果有了直接返回即可，这里我们就可以知道`createReactiveObject()`函数体里肯定做了readonlyToRaw和readonlyValues针对target的set，而createReactiveObject方法也是最核心的方法，它基于Proxy创建了一个代理对象，并返回它，接下来我们可以看看这个函数的源代码：
+```js
+function createReactiveObject(
+  target: any,
+  toProxy: WeakMap<any, any>,
+  toRaw: WeakMap<any, any>,
+  baseHandlers: ProxyHandler<any>,
+  collectionHandlers: ProxyHandler<any>
+) {
+  if (!isObject(target)) {
+    if (__DEV__) {
+      console.warn(`value cannot be made reactive: ${String(target)}`)
+    }
+    return target
+  }
+  // target already has corresponding Proxy
+  let observed = toProxy.get(target)
+  if (observed !== void 0) {
+    return observed
+  }
+  // target is already a Proxy
+  if (toRaw.has(target)) {
+    return target
+  }
+  // only a whitelist of value types can be observed.
+  if (!canObserve(target)) {
+    return target
+  }
+  const handlers = collectionTypes.has(target.constructor)
+    ? collectionHandlers
+    : baseHandlers
+  observed = new Proxy(target, handlers)
+  toProxy.set(target, observed)
+  toRaw.set(observed, target)
+  if (!targetMap.has(target)) {
+    targetMap.set(target, new Map())
+  }
+  return observed
+}
+```
+代码逻辑很简单，一溜烟看下来最主要的就是`observed = new Proxy(target, handlers)`这行，它创建了一个proxy对象，handlers是对target对象的读写等操作的代理方法。这里还有比较重要的是targetMap，它存贮了target对象上各个属性的effect，targetMap结构具体如下：
+
+- target => new Map()
+- Map => [ [key, new Set()] ]
+- Set([effect1, effect2, .....])
+
+对target对象上的属性执行setter操作会触发targetMap上的该属性所属的effect，对target中的属性执行getter操作会跟踪该属性上的所有effect并存在targetMap
+具体可以深入研究内部handlers的设计
+
+
