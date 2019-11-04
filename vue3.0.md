@@ -237,4 +237,6 @@ function createReactiveObject(
 对target对象上的属性执行setter操作会触发targetMap上的该属性所属的effect，对target中的属性执行getter操作会跟踪该属性上的所有effect并存在targetMap
 具体可以深入研究内部handlers的设计
 
+尝鲜就先到这啦，本文也只是旨在对一些新特性和源码做一个小小的尝鲜，当然也包括怎样入手源码的过程，对源码内部还没有一个深刻的理解，以后会专门做个深入源码的文章～
+
 
