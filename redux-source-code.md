@@ -69,6 +69,9 @@ function createStore(reducer, preloadState) {
 }
 ```
 
-- 
+- `getState()`: 返回当前的全局状态对象
+- `subscribe(listener)`: 订阅一个监听器（函数）
+- `dispatch(action)`: 根据指定的action执行对应的reducer逻辑并返回最新的state，然后执行订阅的所有监听器，也是更改全局状态的唯一方法
 
+在listener回调函数中需要调用`store.getState()`拿到最新的state，在执行其他逻辑，关于为什么不把state当成参数直接给每个listener回调，可以看看这个[FAQ](https://redux.js.org/faq/designdecisions#why-doesnt-redux-pass-the-state-and-action-to-subscribers)，上面就是redux的最原始简单实现，大家应该都能看懂，但肯定上不了生产的，有很多注意点需要专门提出来说下
 
