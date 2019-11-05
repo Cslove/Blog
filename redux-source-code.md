@@ -75,3 +75,62 @@ function createStore(reducer, preloadState) {
 
 在listener回调函数中需要调用`store.getState()`拿到最新的state，在执行其他逻辑，关于为什么不把state当成参数直接给每个listener回调，可以看看这个[FAQ](https://redux.js.org/faq/designdecisions#why-doesnt-redux-pass-the-state-and-action-to-subscribers)，上面就是redux的最原始简单实现，大家应该都能看懂，但肯定上不了生产的，有很多注意点需要专门提出来说下
 
+首先在reducer中可以再次进行dispatch调用吗？源码设计中是不可以的，显然如果可以在reducer中再次执行dispatch操作，对性能是一个很大的隐患，会多次对listeners中的监听器进行多次渲染，因此社区也有很多插件其实也是可以进行批量dispatch的，例如`redux-batch`, `redux-batched-actions`，这些都是上面提到的提供了enhancer函数也就是一个加强版的dispatch函数，后续会提到enhancer。因此，redux的dispatch方法源码中有以下逻辑：
+```js
+const isDispatching = false
+function dispatch(action) {
+    // ...
+    if (isDispatching) {
+        throw new Error('Reducers may not dispatch actions.')
+    }
+
+    try {
+        isDispatching = true
+        state = reducer(state, action)
+    } finally {
+        isDispatching = false
+    }
+    // ...
+}
+```
+值得一提的是isDispatching变量也在`subscribe`和`unsubscribe`中使用了，也就是说，在reducer中也是不能进行`store.subscribe()`和取消订阅操作的。
+
+在想一下，可以在listener监听函数中再次执行`store.subscribe()`吗？想一下应该是可以的，可是看下我们上面的简易实现，如果在forEach循环的listener中再次执行`listeners.push(listener)`或者调用相应的unsubscribe函数可能会导致bug，因为push和splice操作都是改变了原数组。显然，这里需要两个listeners来防止这种情况出现，在源码中声明了两个变量以及一个函数：
+```js
+let currentListeners = []
+let nextListeners = currentListeners
+
+// 拷贝一份currentListeners到nextListeners
+function ensureCanMutateNextListeners() {
+    if (nextListeners === currentListeners) {
+      nextListeners = currentListeners.slice()
+    }
+}
+```
+然后在subscribe函数体中，以及返回的unsubscribe中：
+```js
+function subscribe(listener) {
+    ensureCanMutateNextListeners()
+    nextListeners.push(listener)
+
+    return function unsubscribe() {
+        ensureCanMutateNextListeners()
+        const index = nextListeners.indexOf(listener)
+        nextListeners.splice(index, 1)
+        currentListeners = null
+    }
+}
+```
+这里订阅和取消订阅操作都是在nextListeners上进行的，那么dispatch中就肯定需要在currentListeners中进行循环操作：
+```js
+function dispatch(action) {
+    // ...
+    const listeners = (currentListeners = nextListeners)
+    for (let i = 0; i < listeners.length; i++) {
+      const listener = listeners[i]
+      listener()
+    }
+    // ...
+}
+```
+如此设计就会避免相应的bug，但这样有一个点要记着的就是，每次在listener回调执行订阅操作的一个新listener不会在此次正在进行的dispatch中调用，它只会在下一次dispatch中调用，可以看作是在dispatch执行前的listeners中已经打了个快照了，这次的dispach调用中在listener回调中新增的listener只能在下个dispatch中调用
