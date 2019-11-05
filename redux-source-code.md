@@ -31,7 +31,6 @@ store = {
     subscribe,
     getState,
     replaceReducer,
-    [$$observable]: observable,
 }
 ```
 
@@ -134,3 +133,18 @@ function dispatch(action) {
 }
 ```
 如此设计就会避免相应的bug，但这样有一个点要记着的就是，每次在listener回调执行订阅操作的一个新listener不会在此次正在进行的dispatch中调用，它只会在下一次dispatch中调用，可以看作是在dispatch执行前的listeners中已经打了个快照了，这次的dispach调用中在listener回调中新增的listener只能在下个dispatch中调用
+
+可以看到store中还返回了一个replaceReducer方法，直接粘贴源码如下：
+```js
+function replaceReducer(nextReducer) {
+    if (typeof nextReducer !== 'function') {
+      throw new Error('Expected the nextReducer to be a function.')
+    }
+    currentReducer = nextReducer
+
+    dispatch({ type: ActionTypes.REPLACE })
+    return store
+}
+```
+replaceReducer方法本身的逻辑就如此简单，正如字面意思就是替换一个新的reducer，`dispatch({ type: ActionTypes.REPLACE })`这行与上面的简版代码`dispatch({})`效果类似，每当调用replaceReducer函数时都会以新的ruducer初始化旧的state并产生一个新的state
+·
