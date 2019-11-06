@@ -146,5 +146,4 @@ function replaceReducer(nextReducer) {
     return store
 }
 ```
-replaceReducer方法本身的逻辑就如此简单，正如字面意思就是替换一个新的reducer，`dispatch({ type: ActionTypes.REPLACE })`这行与上面的简版代码`dispatch({})`效果类似，每当调用replaceReducer函数时都会以新的ruducer初始化旧的state并产生一个新的state
-·
+replaceReducer方法本身的逻辑就如此简单，正如字面意思就是替换一个新的reducer，`dispatch({ type: ActionTypes.REPLACE })`这行与上面的简版代码`dispatch({})`效果类似，每当调用replaceReducer函数时都会以新的ruducer初始化旧的state并产生一个新的state，它比较常用于动态替换reducer或者实现热加载时候使用
