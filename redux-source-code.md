@@ -147,3 +147,19 @@ function replaceReducer(nextReducer) {
 }
 ```
 replaceReducer方法本身的逻辑就如此简单，正如字面意思就是替换一个新的reducer，`dispatch({ type: ActionTypes.REPLACE })`这行与上面的简版代码`dispatch({})`效果类似，每当调用replaceReducer函数时都会以新的ruducer初始化旧的state并产生一个新的state，它比较常用于动态替换reducer或者实现热加载时候使用
+
+## compose
+
+compose函数在redux中的职责更像是一个工具函数，可以把它想象成一个组合器，专门将多个函数组合成一个函数调用，源码也很简单，如下：
+```js
+function compose(...funcs) {
+  if (funcs.length === 0) {
+    return arg => arg
+  }
+  if (funcs.length === 1) {
+    return funcs[0]
+  }
+  return funcs.reduce((a, b) => (...args) => a(b(...args)))
+}
+```
+它主要是利用了数组的reduce方法将多个函数汇聚成一个函数，可将它看作成这个操作：`compose(a, b ,c) = (...arg) => a(b(c(...arg)))`，从这个形式可以看出传给compose函数的参数必须都是接受一个参数的函数，除了最右边的函数（即以上的c函数）可以接受多个参数，它暴露出来成一个独立的api多用于组合enhancer
