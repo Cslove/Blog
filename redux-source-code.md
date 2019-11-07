@@ -62,6 +62,7 @@ function createStore(reducer, preloadState) {
     function dispatch(action) {
         state = reducer(state, action)
         listeners.forEach(listener => listener())
+        return action
     }
     dispatch({})
     return { dispatch, subscribe, getState }
@@ -205,4 +206,48 @@ if (typeof enhancer !== 'undefined') {
 const chain = middlewares.map(middleware => middleware(middlewareAPI))
 dispatch = compose(...chain)(store.dispatch)
 ```
-从第一行很容易可以看出它执行了众多中间件，以getState和dispatch方法为命名参数传递给中间件，对应于我们上面说的这样的签名`({ getState, dispatch }) => xxx`
+从第一行很容易可以看出它执行了众多中间件，以getState和dispatch方法为命名参数传递给中间件，对应于我们上面说的这样的签名`({ getState, dispatch }) => xxx`，这样上面的chain常量就应该是这个样子`[next => action => {}, next => action => {}, xxx]`，最关键的就是上面第二行代码了，compose函数我们已经解释过了，假设chain常量是这样`[a, b]`，那么就会有如下代码：
+```js
+dispatch = ((...args) => a(b(...args)))(store.dispatch)
+```
+看了上面的代码，可能有的人觉得看着更复杂了，其实`compose(...chain) = (...args) => a(b(...args))`，然后就是个立即执行函数
+```js
+(a => {
+  console.log(a)  // 立即打印 1
+})(1)
+```
+然后从上面我们就可以得出这块代码：`dispatch = a(b(store.dispatch))`这里我们就要去解释为什么middleware要设计成这样`({ getState, dispatch }) => next => action`，我们在进行一步一步拆解如下:
+```js
+b(store.dispatch) = action => {
+  // store.dispatch可在此作用域使用，即 next
+}
+```
+而`action => {}`不就是redux中dispatch的函数签名嘛，所以`b(store.dispatch)`就被当成一个新的dispatch传递给`a()`，a在以同种方式循环下去最终赋给dispatch，值得注意的是每个中间件最终返回值应这样写`return next(action)`，最终
+```js
+dispatch = action => next(action)
+```
+action变量信息就会随着next一步步从a到b穿透到最后一个中间件直至被redux内部的store.dispatch调用，也就是最终修改reducer逻辑，store.dispatch最终返回的还是action，这就是中间件逻辑，你可以在中间件中任何时候调用next(action)，最终返回它就行了，我们可以看个redux官网的小例子：
+```js
+function logger({ getState }) {
+  return next => action => {
+    console.log('will dispatch', action)
+    // Call the next dispatch method in the middleware chain.
+    const returnValue = next(action)
+    console.log('state after dispatch', getState())
+
+    // This will likely be the action itself, unless
+    // a middleware further in chain changed it.
+    return returnValue
+  }
+}
+
+const store = createStore(todos, ['Use Redux'], applyMiddleware(logger))
+
+store.dispatch({
+  type: 'ADD_TODO',
+  text: 'Understand the middleware'
+})
+// (These lines will be logged by the middleware:)
+// will dispatch: { type: 'ADD_TODO', text: 'Understand the middleware' }
+// state after dispatch: [ 'Use Redux', 'Understand the middleware' ]
+```
