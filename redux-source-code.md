@@ -163,3 +163,46 @@ function compose(...funcs) {
 }
 ```
 它主要是利用了数组的reduce方法将多个函数汇聚成一个函数，可将它看作成这个操作：`compose(a, b ,c) = (...arg) => a(b(c(...arg)))`，从这个形式可以看出传给compose函数的参数必须都是接受一个参数的函数，除了最右边的函数（即以上的c函数）可以接受多个参数，它暴露出来成一个独立的api多用于组合enhancer
+
+## applyMiddleware
+
+applyMiddleware函数可以说是redux内部的一个enhancer实现，它可以出现在createStore方法的第二个参数或第三个参数调用`createStore(reducer, preloadState, applyMiddleware(...middlewares))`，redux相关插件基本都要经过它之口。它接受一系列的redux中间件`applyMiddleware(...middlewares)`并返回一个enhancer，我们先来看下它的源码：
+```js
+function applyMiddleware(...middlewares) {
+  return createStore => (reducer, ...args) => {
+    const store = createStore(reducer, ...args)
+    let dispatch = () => {
+      throw new Error(
+        'Dispatching while constructing your middleware is not allowed. ' +
+          'Other middleware would not be applied to this dispatch.'
+      )
+    }
+    const middlewareAPI = {
+      getState: store.getState,
+      dispatch: (action, ...args) => dispatch(action, ...args)
+    }
+    const chain = middlewares.map(middleware => middleware(middlewareAPI))
+    dispatch = compose(...chain)(store.dispatch)
+
+    return {
+      ...store,
+      dispatch
+    }
+  }
+}
+```
+以上就是applyMiddleware的所有源码，看redux源码的所有api设计就有个感觉，看起来都很精简。我们从它的参数看起，它接受一系列的middleware，redux官方说middleware的设计应遵循这样的签名`({ getState, dispatch }) => next => action`，为什么要这样设计呢？我们一步一步来看，先看下它的返回值，它返回的是一个函数，类似这样的签名`createStore => createStore`，从以上代码来看类似这种`createStore => (reducer, ...args) => store`，所以这也常常被用作createStore的第三个参数存在，还记得我们在讲createStore函数时说了，若是enhancer存在会有如下逻辑：
+```js
+if (typeof enhancer !== 'undefined') {
+  if (typeof enhancer !== 'function') {
+    throw new Error('Expected the enhancer to be a function.')
+  }
+  return enhancer(createStore)(reducer, preloadedStat)
+}
+```
+刚好对应于我们上面写的函数签名，也就是说如果enhancer不存在，redux会创建内部的store，如果存在，就先创建自己内部的store，然后将store传给中间件进行“魔改”，“魔改“什么呢？`dispatch`函数，看一下它最后的返回值`return { ...store, dispatch }`覆盖了原生的dispatch方法，但并不是说原生的dispatch方法不见了，它只是经过中间件而被加工赋予了更多的功能，接着往下看最核心的两行
+```js
+const chain = middlewares.map(middleware => middleware(middlewareAPI))
+dispatch = compose(...chain)(store.dispatch)
+```
+从第一行很容易可以看出它执行了众多中间件，以getState和dispatch方法为命名参数传递给中间件，对应于我们上面说的这样的签名`({ getState, dispatch }) => xxx`
