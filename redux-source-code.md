@@ -133,7 +133,7 @@ function dispatch(action) {
     // ...
 }
 ```
-如此设计就会避免相应的bug，但这样有一个点要记着的就是，每次在listener回调执行订阅操作的一个新listener不会在此次正在进行的dispatch中调用，它只会在下一次dispatch中调用，可以看作是在dispatch执行前的listeners中已经打了个快照了，这次的dispach调用中在listener回调中新增的listener只能在下个dispatch中调用
+如此设计就会避免相应的bug，但这样有一个明显的点要记着的就是，每次在listener回调执行订阅操作的一个新listener不会在此次正在进行的dispatch中调用，它只会在下一次dispatch中调用，可以看作是在dispatch执行前的listeners中已经打了个快照了，这次的dispach调用中在listener回调中新增的listener只能在下个dispatch中调用，因为currentListeners里还没有最新的listener呢
 
 可以看到store中还返回了一个replaceReducer方法，直接粘贴源码如下：
 ```js
