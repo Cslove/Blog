@@ -47,8 +47,8 @@ if (typeof enhancer !== 'undefined') {
 可以看到直接调用enhancer并返回了它，返回的就是一个与上面结构一致的加强版store对象，具体enhancer的实现我们在讲到`applyMiddleware`API的时候在谈。如果enhancer不存在的话，就会执行以下逻辑（简单起见我写了个简易版的实现，其他具体会在后面一起讲解源码的设计细节）：
 ```js
 function createStore(reducer, preloadState) {
-    var state = preloadState
-    var listeners = []
+    let state = preloadState
+    let listeners = []
     function getState() {
         return state
     }
