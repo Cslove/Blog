@@ -251,3 +251,44 @@ store.dispatch({
 // will dispatch: { type: 'ADD_TODO', text: 'Understand the middleware' }
 // state after dispatch: [ 'Use Redux', 'Understand the middleware' ]
 ```
+## combineReducers
+
+combineReducers也可以算个工具函数，它旨在把一个以对象形式的多个reducer合并成一个reducer传给createStore方法，类似如下：
+```js
+const reducer = combineReducers({
+  foo: (fooState, action) => newFooState,
+  bar: (barState, action) => newBarState,
+  ...,
+})
+const store = createStore(reducer)
+```
+在一些大型复杂场景中应用还是挺广泛的，可将全局状态分离成一个字状态方便维护，我们来看下它的源码实现：
+```js
+function combineReducers(reducers) {
+  const finalReducers = { ...reducers }
+  const finalReducerKeys = Object.keys(finalReducers)
+
+  return function combination(state = {}, action) {
+    let hasChanged = false
+    const nextState = {}
+    for (let i = 0; i < finalReducerKeys.length; i++) {
+      const key = finalReducerKeys[i]
+      const reducer = finalReducers[key]
+      const previousStateForKey = state[key]
+      const nextStateForKey = reducer(previousStateForKey, action)
+      if (typeof nextStateForKey === 'undefined') {
+        const errorMessage = getUndefinedStateErrorMessage(key, action)
+        throw new Error(errorMessage)
+      }
+      nextState[key] = nextStateForKey
+      hasChanged = hasChanged || nextStateForKey !== previousStateForKey
+    }
+    hasChanged =
+      hasChanged || finalReducerKeys.length !== Object.keys(state).length
+    return hasChanged ? nextState : state
+  }
+}
+```
+省去了一些类型判断和报错信息的逻辑，只保留了核心的实现。关于它的入参和返回值上面已经说过了，我们着重来看下返回的combination实现，当你在业务代码中每次dispatch一个action的时候，这最终的combination reducer就会循环遍历子reducer，从for 循环中`const nextStateForKey = reducer(previousStateForKey, action)`就可以看出来它将计算出的子新state存在nextState中，这里有个点要注意的就是我们的子reducer需要处理传入的state为undefined的情况(state的默认值是{})，而且子reducer的返回值也不能是undefind，常见的处理情况就给个默认值就行`(state = initialState, action) => xxx`。
+
+还注意到hasChanged变量的作用，它在每次的for 循环中只要返回的新state与旧state不同就为true，循环外还判断了下整个过程有没有新增或删除的reducer，为true就返回新的nextState，false返回原有state，这基本上就是combineReducers的实现逻辑，也不复杂
