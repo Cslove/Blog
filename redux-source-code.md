@@ -318,4 +318,8 @@ function bindActionCreators(actionCreators, dispatch) {
   return boundActionCreators
 }
 ```
-这个跟随官方的[小例子](https://redux.js.org/api/bindactioncreators)看就会明白怎么使用了～
+这个跟随官方的[小例子](https://redux.js.org/api/bindactioncreators)，一看就会明白怎么使用了～
+
+## 总结
+
+redux源码很好读～尤其现在还是用typescript书写，各个函数的接口类型都一清二楚，个人觉得比较复杂难想的就是中间件的设计了，不过从头看下来能感觉到源码的短小精炼，其中也是收获蛮多～
