@@ -292,3 +292,30 @@ function combineReducers(reducers) {
 省去了一些类型判断和报错信息的逻辑，只保留了核心的实现。关于它的入参和返回值上面已经说过了，我们着重来看下返回的combination实现，当你在业务代码中每次dispatch一个action的时候，这最终的combination reducer就会循环遍历子reducer，从for 循环中`const nextStateForKey = reducer(previousStateForKey, action)`就可以看出来它将计算出的子新state存在nextState中，这里有个点要注意的就是我们的子reducer需要处理传入的state为undefined的情况(state的默认值是{})，而且子reducer的返回值也不能是undefind，常见的处理情况就给个默认值就行`(state = initialState, action) => xxx`。
 
 还注意到hasChanged变量的作用，它在每次的for 循环中只要返回的新state与旧state不同就为true，循环外还判断了下整个过程有没有新增或删除的reducer，为true就返回新的nextState，false返回原有state，这基本上就是combineReducers的实现逻辑，也不复杂
+
+## bindActionCreators
+
+bindActionCreators函数也算是个工具函数，了解了上面的api源码结构，看它的作用也就知道了，如下：
+```js
+function bindActionCreator(actionCreator, dispatch) {
+  return function(this, ...args) {
+    return dispatch(actionCreator.apply(this, args))
+  }
+}
+
+function bindActionCreators(actionCreators, dispatch) {
+  if (typeof actionCreators === 'function') {
+    return bindActionCreator(actionCreators, dispatch)
+  }
+
+  const boundActionCreators = {}
+  for (const key in actionCreators) {
+    const actionCreator = actionCreators[key]
+    if (typeof actionCreator === 'function') {
+      boundActionCreators[key] = bindActionCreator(actionCreator, dispatch)
+    }
+  }
+  return boundActionCreators
+}
+```
+这个跟随官方的[小例子](https://redux.js.org/api/bindactioncreators)看就会明白怎么使用了～
